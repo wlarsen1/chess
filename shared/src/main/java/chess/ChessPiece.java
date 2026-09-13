@@ -57,10 +57,18 @@ public class ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         List<ChessMove> moves = new ArrayList<>();
 
-        if (type == PieceType.BISHOP) {
-            addSlidingMoves(board, myPosition, moves, new int[][]{
+        switch (type) {
+            case BISHOP -> addSlidingMoves(board, myPosition, moves, new int[][]{
                     {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
             });
+            case ROOK -> addSlidingMoves(board, myPosition, moves, new int[][]{
+                    {1, 0}, {-1, 0}, {0, 1}, {0, -1}
+            });
+            case QUEEN -> addSlidingMoves(board, myPosition, moves, new int[][]{
+                    {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+                    {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+            });
+            default -> {}
         }
 
         return moves;
