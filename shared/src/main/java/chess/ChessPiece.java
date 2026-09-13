@@ -3,6 +3,7 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.List;
 
 /**
  * Represents a single chess piece
@@ -54,7 +55,39 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return new ArrayList<>();
+        List<ChessMove> moves = new ArrayList<>();
+
+        if (type == PieceType.BISHOP) {
+            addSlidingMoves(board, myPosition, moves, new int[][]{
+                    {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+            });
+        }
+
+        return moves;
+    }
+
+    private void addSlidingMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves, int[][] directions) {
+        for (int[] dir : directions) {
+            int row = start.getRow() + dir[0];
+            int col = start.getColumn() + dir[1];
+
+            while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                ChessPosition target = new ChessPosition(row, col);
+                ChessPiece pieceAtTarget = board.getPiece(target);
+
+                if (pieceAtTarget == null) {
+                    moves.add(new ChessMove(start, target, null));
+                } else {
+                    if (pieceAtTarget.getTeamColor() != this.pieceColor) {
+                        moves.add(new ChessMove(start, target, null));
+                    }
+                    break;
+                }
+
+                row += dir[0];
+                col += dir[1];
+            }
+        }
     }
 
     @Override
