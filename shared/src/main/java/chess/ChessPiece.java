@@ -76,11 +76,36 @@ public class ChessPiece {
                     {1, 0}, {-1, 0}, {0, 1}, {0, -1},
                     {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
             });
-            default -> {}
+            case PAWN -> addPawnForwardMoves(board, myPosition, moves);
         }
 
         return moves;
     }
+
+    private void addPawnForwardMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves) {
+        int direction = (this.pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+        int startRow = (this.pieceColor == ChessGame.TeamColor.WHITE) ? 2 : 7;
+        int nextRow = start.getRow() + direction;
+
+        // 1. Single forward step (must be empty)
+        if (nextRow >= 1 && nextRow <= 8) {
+            ChessPosition oneStep = new ChessPosition(nextRow, start.getColumn());
+            if (board.getPiece(oneStep) == null) {
+                // Ignore promotions for this commit
+                moves.add(new ChessMove(start, oneStep, null));
+
+                // 2. Double forward jump from starting rank (both squares must be clear)
+                int doubleRow = start.getRow() + (2 * direction);
+                if (start.getRow() == startRow) {
+                    ChessPosition twoStep = new ChessPosition(doubleRow, start.getColumn());
+                    if (board.getPiece(twoStep) == null) {
+                        moves.add(new ChessMove(start, twoStep, null));
+                    }
+                }
+            }
+        }
+    }
+
     private void addSteppingMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves, int[][] offsets) {
         for (int[] offset : offsets) {
             int row = start.getRow() + offset[0];
