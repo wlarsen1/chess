@@ -76,25 +76,25 @@ public class ChessPiece {
                     {1, 0}, {-1, 0}, {0, 1}, {0, -1},
                     {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
             });
-            case PAWN -> addPawnForwardMoves(board, myPosition, moves);
+            case PAWN -> addPawnMoves(board, myPosition, moves);
         }
 
         return moves;
     }
 
-    private void addPawnForwardMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves) {
+    private void addPawnMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves) {
         int direction = (this.pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
         int startRow = (this.pieceColor == ChessGame.TeamColor.WHITE) ? 2 : 7;
+        int promotionRow = (this.pieceColor == ChessGame.TeamColor.WHITE) ? 8 : 1;
+
         int nextRow = start.getRow() + direction;
 
-        // 1. Single forward step (must be empty)
+        // 1. Forward moves
         if (nextRow >= 1 && nextRow <= 8) {
             ChessPosition oneStep = new ChessPosition(nextRow, start.getColumn());
             if (board.getPiece(oneStep) == null) {
-                // Ignore promotions for this commit
-                moves.add(new ChessMove(start, oneStep, null));
+                addPawnMoveOrPromotions(start, oneStep, nextRow == promotionRow, moves);
 
-                // 2. Double forward jump from starting rank (both squares must be clear)
                 int doubleRow = start.getRow() + (2 * direction);
                 if (start.getRow() == startRow) {
                     ChessPosition twoStep = new ChessPosition(doubleRow, start.getColumn());
@@ -103,6 +103,29 @@ public class ChessPiece {
                     }
                 }
             }
+        }
+
+        // 2. Diagonal captures
+        int[] captureCols = {start.getColumn() - 1, start.getColumn() + 1};
+        for (int col : captureCols) {
+            if (col >= 1 && col <= 8 && nextRow >= 1 && nextRow <= 8) {
+                ChessPosition target = new ChessPosition(nextRow, col);
+                ChessPiece targetPiece = board.getPiece(target);
+                if (targetPiece != null && targetPiece.getTeamColor() != this.pieceColor) {
+                    addPawnMoveOrPromotions(start, target, nextRow == promotionRow, moves);
+                }
+            }
+        }
+    }
+
+    private void addPawnMoveOrPromotions(ChessPosition start, ChessPosition end, boolean isPromotion, List<ChessMove> moves) {
+        if (isPromotion) {
+            moves.add(new ChessMove(start, end, PieceType.QUEEN));
+            moves.add(new ChessMove(start, end, PieceType.BISHOP));
+            moves.add(new ChessMove(start, end, PieceType.ROOK));
+            moves.add(new ChessMove(start, end, PieceType.KNIGHT));
+        } else {
+            moves.add(new ChessMove(start, end, null));
         }
     }
 
