@@ -68,10 +68,33 @@ public class ChessPiece {
                     {1, 0}, {-1, 0}, {0, 1}, {0, -1},
                     {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
             });
+            case KNIGHT -> addSteppingMoves(board, myPosition, moves, new int[][]{
+                    {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
+                    {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+            });
+            case KING -> addSteppingMoves(board, myPosition, moves, new int[][]{
+                    {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+                    {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+            });
             default -> {}
         }
 
         return moves;
+    }
+    private void addSteppingMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves, int[][] offsets) {
+        for (int[] offset : offsets) {
+            int row = start.getRow() + offset[0];
+            int col = start.getColumn() + offset[1];
+
+            if (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                ChessPosition target = new ChessPosition(row, col);
+                ChessPiece pieceAtTarget = board.getPiece(target);
+
+                if (pieceAtTarget == null || pieceAtTarget.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(start, target, null));
+                }
+            }
+        }
     }
 
     private void addSlidingMoves(ChessBoard board, ChessPosition start, List<ChessMove> moves, int[][] directions) {
