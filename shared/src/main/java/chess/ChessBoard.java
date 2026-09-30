@@ -77,6 +77,16 @@ public class ChessBoard {
         addPiece(new ChessPosition(8, 8), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK));
     }
 
+    public ChessBoard copy() {
+        ChessBoard copy = new ChessBoard();
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                copy.squares[r][c] = this.squares[r][c];
+            }
+        }
+        return copy;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
