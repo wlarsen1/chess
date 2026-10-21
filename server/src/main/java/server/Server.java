@@ -7,6 +7,7 @@ import io.javalin.Javalin;
 import service.ClearService;
 import service.ServiceException;
 import service.UserService;
+import service.GameService;
 
 import java.util.Map;
 
@@ -31,6 +32,10 @@ public class Server {
 
         UserHandler userHandler = new UserHandler(
                 new UserService(users, auths)
+        );
+
+        GameHandler gameHandler = new GameHandler(
+                new GameService(games, auths)
         );
 
         javalin.exception(ServiceException.class, (error, ctx) -> {
@@ -62,6 +67,9 @@ public class Server {
 
         javalin.post("/session", userHandler::login);
         javalin.delete("/session", userHandler::logout);
+
+        javalin.post("/game", gameHandler::createGame);
+        javalin.get("/game", gameHandler::listGames);
     }
 
     public int run(int desiredPort) {
