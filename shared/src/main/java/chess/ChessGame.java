@@ -115,6 +115,7 @@ public class ChessGame {
 
     private boolean isInCheck(ChessBoard board, TeamColor team) {
         ChessPosition kingPosition = findKing(board, team);
+
         if (kingPosition == null) {
             return false;
         }
@@ -124,15 +125,18 @@ public class ChessGame {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
 
-                if (piece != null && piece.getTeamColor() != team) {
-                    for (ChessMove move : piece.pieceMoves(board, position)) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
+                if (piece == null || piece.getTeamColor() == team) {
+                    continue;
+                }
+
+                for (ChessMove move : piece.pieceMoves(board, position)) {
+                    if (move.getEndPosition().equals(kingPosition)) {
+                        return true;
                     }
                 }
             }
         }
+
         return false;
     }
 
@@ -210,8 +214,12 @@ public class ChessGame {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChessGame that = (ChessGame) o;
         return teamTurn == that.teamTurn && Objects.equals(board, that.board);
     }
