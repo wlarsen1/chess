@@ -1,9 +1,13 @@
 package server;
 
 import com.google.gson.Gson;
-import io.javalin.*;
-import org.jetbrains.annotations.NotNull;
-import io.javalin.http.Context;
+import com.google.gson.JsonParseException;
+import dataaccess.*;
+import io.javalin.Javalin;
+import service.ClearService;
+import service.ServiceException;
+import service.UserService;
+
 import java.util.Map;
 
 public class Server {
@@ -11,24 +15,50 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
-        javalin = Javalin.create(config -> {
-            config.staticFiles.add(staticFiles -> {
-                staticFiles.directory = "/web";
-                staticFiles.location = io.javalin.http.staticfiles.Location.CLASSPATH;
+        javalin = Javalin.create(
+                config -> config.staticFiles.add("web")
+        );
 
-            });
+        Gson gson = new Gson();
+
+        UserDAO users = new MemoryUserDAO();
+        AuthDAO auths = new MemoryAuthDAO();
+        GameDAO games = new MemoryGameDAO();
+
+        ClearHandler clearHandler = new ClearHandler(
+                new ClearService(users, auths, games)
+        );
+
+        UserHandler userHandler = new UserHandler(
+                new UserService(users, auths)
+        );
+
+        javalin.exception(ServiceException.class, (error, ctx) -> {
+            ctx.status(error.getStatusCode());
+            ctx.contentType("application/json");
+            ctx.result(gson.toJson(
+                    Map.of("message", error.getMessage())
+            ));
         });
 
+        javalin.exception(DataAccessException.class, (error, ctx) -> {
+            ctx.status(500);
+            ctx.contentType("application/json");
+            ctx.result(gson.toJson(
+                    Map.of("message", "Error: storage failure")
+            ));
+        });
 
-        javalin.delete("/db", Server::clearDb);
-        // Register your endpoints and exception handlers here.
+        javalin.exception(JsonParseException.class, (error, ctx) -> {
+            ctx.status(400);
+            ctx.contentType("application/json");
+            ctx.result(gson.toJson(
+                    Map.of("message", "Error: bad request")
+            ));
+        });
 
-    }
-
-    private static void clearDb(@NotNull Context ctx){
-        var r = Map.of();
-        var json = new Gson();
-        ctx.json(json.toJson(r));
+        javalin.delete("/db", clearHandler::clear);
+        javalin.post("/user", userHandler::register);
     }
 
     public int run(int desiredPort) {
@@ -37,7 +67,6 @@ public class Server {
     }
 
     public void stop() {
-
         javalin.stop();
     }
 }
