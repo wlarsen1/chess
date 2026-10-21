@@ -7,6 +7,7 @@ import model.AuthData;
 import model.UserData;
 import service.ServiceException;
 import service.UserService;
+import request.LoginRequest;
 
 public class UserHandler {
 
@@ -25,5 +26,28 @@ public class UserHandler {
 
         ctx.contentType("application/json");
         ctx.result(gson.toJson(result));
+    }
+
+    public void login(Context ctx)
+            throws ServiceException, DataAccessException {
+
+        LoginRequest request = gson.fromJson(
+                ctx.body(), LoginRequest.class
+        );
+
+        AuthData result = service.login(request);
+
+        ctx.contentType("application/json");
+        ctx.result(gson.toJson(result));
+    }
+
+    public void logout(Context ctx)
+            throws ServiceException, DataAccessException {
+
+        String authToken = ctx.header("authorization");
+        service.logout(authToken);
+
+        ctx.contentType("application/json");
+        ctx.result("{}");
     }
 }
