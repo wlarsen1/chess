@@ -5,6 +5,7 @@ import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import request.LoginRequest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,5 +65,85 @@ public class UserServiceTests {
 
         assertEquals(400, error.getStatusCode());
         assertNull(users.getUser("weston"));
+    }
+
+    @Test
+    public void loginSuccess() throws Exception {
+        AuthData registration = service.register(
+                new UserData("weston", "password", "w@email.com")
+        );
+
+        AuthData result = service.login(
+                new LoginRequest("weston", "password")
+        );
+
+        assertEquals("weston", result.username());
+        assertNotNull(result.authToken());
+        assertNotEquals(registration.authToken(), result.authToken());
+        assertEquals(result, auths.getAuth(result.authToken()));
+    }
+
+    @Test
+    public void loginWrongPassword() throws Exception {
+        service.register(
+                new UserData("weston", "password", "w@email.com")
+        );
+
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.login(new LoginRequest("weston", "wrong"))
+        );
+
+        assertEquals(401, error.getStatusCode());
+    }
+
+    @Test
+    public void loginUnknownUser() {
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.login(new LoginRequest("unknown", "password"))
+        );
+
+        assertEquals(401, error.getStatusCode());
+    }
+
+    @Test
+    public void loginMissingPassword() {
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.login(new LoginRequest("weston", null))
+        );
+
+        assertEquals(400, error.getStatusCode());
+    }
+
+    @Test
+    public void logoutSuccess() throws Exception {
+        AuthData registration = service.register(
+                new UserData("weston", "password", "w@email.com")
+        );
+
+        AuthData secondSession = service.login(
+                new LoginRequest("weston", "password")
+        );
+
+        service.logout(registration.authToken());
+
+        assertNull(auths.getAuth(registration.authToken()));
+        assertNotNull(users.getUser("weston"));
+        assertEquals(
+                secondSession,
+                auths.getAuth(secondSession.authToken())
+        );
+    }
+
+    @Test
+    public void logoutInvalidToken() {
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.logout("invalid-token")
+        );
+
+        assertEquals(401, error.getStatusCode());
     }
 }
