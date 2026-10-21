@@ -6,6 +6,7 @@ import io.javalin.http.Context;
 import request.CreateGameRequest;
 import service.GameService;
 import service.ServiceException;
+import request.JoinGameRequest;
 
 import java.util.Map;
 
@@ -42,5 +43,23 @@ public class GameHandler {
 
         ctx.contentType("application/json");
         ctx.result(gson.toJson(Map.of("games", games)));
+    }
+
+    public void joinGame(Context ctx)
+            throws ServiceException, DataAccessException {
+
+        String authToken = ctx.header("authorization");
+
+        JoinGameRequest request = gson.fromJson(
+                ctx.body(), JoinGameRequest.class
+        );
+
+        String color = request == null ? null : request.playerColor();
+        Integer gameID = request == null ? null : request.gameID();
+
+        service.joinGame(authToken, color, gameID);
+
+        ctx.contentType("application/json");
+        ctx.result("{}");
     }
 }

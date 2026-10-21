@@ -85,4 +85,79 @@ public class GameServiceTests {
 
         assertEquals(401, error.getStatusCode());
     }
+
+    @Test
+    public void joinWhiteSuccess() throws Exception {
+        int gameID = games.createGame("Test game");
+
+        service.joinGame("valid-token", "WHITE", gameID);
+
+        GameData game = games.getGame(gameID);
+        assertEquals("weston", game.whiteUsername());
+        assertNull(game.blackUsername());
+        assertEquals("Test game", game.gameName());
+        assertNotNull(game.game());
+    }
+
+    @Test
+    public void joinBlackSuccess() throws Exception {
+        int gameID = games.createGame("Test game");
+
+        service.joinGame("valid-token", "BLACK", gameID);
+
+        GameData game = games.getGame(gameID);
+        assertEquals("weston", game.blackUsername());
+        assertNull(game.whiteUsername());
+    }
+
+    @Test
+    public void joinOccupiedSeat() throws Exception {
+        int gameID = games.createGame("Test game");
+        service.joinGame("valid-token", "WHITE", gameID);
+
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.joinGame("valid-token", "WHITE", gameID)
+        );
+
+        assertEquals(403, error.getStatusCode());
+        assertEquals("weston", games.getGame(gameID).whiteUsername());
+    }
+
+    @Test
+    public void joinUnauthorized() throws Exception {
+        int gameID = games.createGame("Test game");
+
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.joinGame("invalid-token", "WHITE", gameID)
+        );
+
+        assertEquals(401, error.getStatusCode());
+        assertNull(games.getGame(gameID).whiteUsername());
+    }
+
+    @Test
+    public void joinMissingGame() {
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.joinGame("valid-token", "WHITE", 999)
+        );
+
+        assertEquals(400, error.getStatusCode());
+    }
+
+    @Test
+    public void joinInvalidColor() throws Exception {
+        int gameID = games.createGame("Test game");
+
+        ServiceException error = assertThrows(
+                ServiceException.class,
+                () -> service.joinGame("valid-token", "BLUE", gameID)
+        );
+
+        assertEquals(400, error.getStatusCode());
+        assertNull(games.getGame(gameID).whiteUsername());
+        assertNull(games.getGame(gameID).blackUsername());
+    }
 }

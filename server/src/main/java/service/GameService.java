@@ -43,4 +43,49 @@ public class GameService {
             throw new ServiceException(401, "Error: unauthorized");
         }
     }
+
+    public void joinGame(String authToken, String playerColor, Integer gameID)
+            throws ServiceException, DataAccessException {
+
+        requireAuth(authToken);
+
+        if (gameID == null
+                || (!"WHITE".equals(playerColor)
+                && !"BLACK".equals(playerColor))) {
+            throw new ServiceException(400, "Error: bad request");
+        }
+
+        GameData game = gameDAO.getGame(gameID);
+
+        if (game == null) {
+            throw new ServiceException(400, "Error: bad request");
+        }
+
+        String username = authDAO.getAuth(authToken).username();
+
+        String white = game.whiteUsername();
+        String black = game.blackUsername();
+
+        if ("WHITE".equals(playerColor)) {
+            if (white != null) {
+                throw new ServiceException(403, "Error: already taken");
+            }
+            white = username;
+        } else {
+            if (black != null) {
+                throw new ServiceException(403, "Error: already taken");
+            }
+            black = username;
+        }
+
+        GameData updatedGame = new GameData(
+                game.gameID(),
+                white,
+                black,
+                game.gameName(),
+                game.game()
+        );
+
+        gameDAO.updateGame(updatedGame);
+    }
 }
