@@ -16,6 +16,12 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
+        try {
+            DatabaseSchema.initialize();
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("Failed to initialize database", ex);
+        }
+
         javalin = Javalin.create(
                 config -> config.staticFiles.add("web")
         );
