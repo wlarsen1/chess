@@ -28,9 +28,9 @@ public class Server {
 
         Gson gson = new Gson();
 
-        UserDAO users = new MemoryUserDAO();
-        AuthDAO auths = new MemoryAuthDAO();
-        GameDAO games = new MemoryGameDAO();
+        UserDAO users = new SQLUserDAO();
+        AuthDAO auths = new SQLAuthDAO();
+        GameDAO games = new SQLGameDAO();
 
         ClearHandler clearHandler = new ClearHandler(
                 new ClearService(users, auths, games)
