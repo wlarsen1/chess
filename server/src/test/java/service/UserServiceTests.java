@@ -6,6 +6,7 @@ import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import request.LoginRequest;
+import org.mindrot.jbcrypt.BCrypt;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,7 +31,13 @@ public class UserServiceTests {
 
         AuthData result = service.register(user);
 
-        assertEquals(user, users.getUser("weston"));
+        UserData stored = users.getUser("weston");
+
+        assertNotNull(stored);
+        assertEquals(user.username(), stored.username());
+        assertEquals(user.email(), stored.email());
+        assertNotEquals(user.password(), stored.password());
+        assertTrue(BCrypt.checkpw(user.password(), stored.password()));
         assertEquals("weston", result.username());
         assertNotNull(result.authToken());
         assertFalse(result.authToken().isBlank());
@@ -50,8 +57,12 @@ public class UserServiceTests {
                 )
         );
 
+        UserData original = users.getUser("weston");
         assertEquals(403, error.getStatusCode());
-        assertEquals("password", users.getUser("weston").password());
+        assertEquals(original, users.getUser("weston"));
+        assertTrue(BCrypt.checkpw(
+                "password", users.getUser("weston").password()
+        ));
     }
 
     @Test
