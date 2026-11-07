@@ -3,27 +3,47 @@ package client;
 import org.junit.jupiter.api.*;
 import server.Server;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ServerFacadeTests {
 
     private static Server server;
+    private static ServerFacade facade;
 
     @BeforeAll
     public static void init() {
         server = new Server();
-        var port = server.run(0);
-        System.out.println("Started test HTTP server on " + port);
+        int port = server.run(0);
+        facade = new ServerFacade(port);
+    }
+
+    @BeforeEach
+    public void clearDatabase() throws ServerException {
+        facade.clear();
     }
 
     @AfterAll
-    static void stopServer() {
-        server.stop();
+    public static void stopServer() {
+        if (server != null) {
+            server.stop();
+        }
     }
-
 
     @Test
-    public void sampleTest() {
-        Assertions.assertTrue(true);
+    public void clearEmptyDatabase() {
+        assertDoesNotThrow(() -> facade.clear());
     }
 
+    @Test
+    public void rejectInvalidPort() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ServerFacade(0)
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new ServerFacade(65536)
+        );
+    }
 }
