@@ -46,4 +46,68 @@ public class ServerFacadeTests {
                 () -> new ServerFacade(65536)
         );
     }
+    @Test
+    public void registerSuccess() throws ServerException {
+        var auth = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        assertNotNull(auth);
+        assertEquals("player1", auth.username());
+        assertNotNull(auth.authToken());
+        assertFalse(auth.authToken().isBlank());
+    }
+
+    @Test
+    public void registerDuplicateUsername() throws ServerException {
+        facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.register(
+                        "player1",
+                        "differentPassword",
+                        "different@email.com"
+                )
+        );
+    }
+
+    @Test
+    public void registerMissingPassword() {
+        assertThrows(
+                ServerException.class,
+                () -> facade.register(
+                        "player1",
+                        null,
+                        "player1@email.com"
+                )
+        );
+    }
+
+    @Test
+    public void clearRemovesRegisteredUser() throws ServerException {
+        facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        facade.clear();
+
+        var auth = facade.register(
+                "player1",
+                "newPassword",
+                "player1@email.com"
+        );
+
+        assertEquals("player1", auth.username());
+        assertNotNull(auth.authToken());
+        assertFalse(auth.authToken().isBlank());
+    }
 }

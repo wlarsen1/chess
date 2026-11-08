@@ -9,6 +9,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import model.AuthData;
+import model.UserData;
 
 public class ServerFacade {
 
@@ -32,6 +34,23 @@ public class ServerFacade {
 
     public void clear() throws ServerException {
         makeRequest("DELETE", "/db", null, null, null);
+    }
+
+    public AuthData register(
+            String username,
+            String password,
+            String email
+    ) throws ServerException {
+
+        UserData request = new UserData(username, password, email);
+
+        return makeRequest(
+                "POST",
+                "/user",
+                request,
+                null,
+                AuthData.class
+        );
     }
 
     private <T> T makeRequest(
