@@ -110,4 +110,77 @@ public class ServerFacadeTests {
         assertNotNull(auth.authToken());
         assertFalse(auth.authToken().isBlank());
     }
+
+    @Test
+    public void loginSuccess() throws ServerException {
+        var registration = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        var auth = facade.login("player1", "password");
+
+        assertNotNull(auth);
+        assertEquals("player1", auth.username());
+        assertNotNull(auth.authToken());
+        assertFalse(auth.authToken().isBlank());
+        assertNotEquals(registration.authToken(), auth.authToken());
+    }
+
+    @Test
+    public void loginWrongPassword() throws ServerException {
+        facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.login("player1", "wrongPassword")
+        );
+    }
+
+    @Test
+    public void loginUnknownUser() {
+        assertThrows(
+                ServerException.class,
+                () -> facade.login("unknownPlayer", "password")
+        );
+    }
+
+    @Test
+    public void logoutSuccess() throws ServerException {
+        facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        var auth = facade.login("player1", "password");
+
+        assertDoesNotThrow(() -> facade.logout(auth.authToken()));
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.logout(auth.authToken())
+        );
+    }
+
+    @Test
+    public void logoutInvalidToken() {
+        assertThrows(
+                ServerException.class,
+                () -> facade.logout("invalid-token")
+        );
+    }
+
+    @Test
+    public void logoutMissingToken() {
+        assertThrows(
+                ServerException.class,
+                () -> facade.logout(null)
+        );
+    }
 }

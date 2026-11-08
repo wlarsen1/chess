@@ -11,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import model.AuthData;
 import model.UserData;
+import request.LoginRequest;
 
 public class ServerFacade {
 
@@ -50,6 +51,32 @@ public class ServerFacade {
                 request,
                 null,
                 AuthData.class
+        );
+    }
+
+    public AuthData login(
+            String username,
+            String password
+    ) throws ServerException {
+
+        LoginRequest request = new LoginRequest(username, password);
+
+        return makeRequest(
+                "POST",
+                "/session",
+                request,
+                null,
+                AuthData.class
+        );
+    }
+
+    public void logout(String authToken) throws ServerException {
+        makeRequest(
+                "DELETE",
+                "/session",
+                null,
+                authToken,
+                null
         );
     }
 
