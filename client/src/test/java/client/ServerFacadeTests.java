@@ -183,4 +183,115 @@ public class ServerFacadeTests {
                 () -> facade.logout(null)
         );
     }
+
+    @Test
+    public void createGameSuccess() throws ServerException {
+        var auth = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        int gameID = facade.createGame(
+                auth.authToken(),
+                "My First Game"
+        );
+
+        var games = facade.listGames(auth.authToken());
+
+        assertEquals(1, games.size());
+        assertEquals(gameID, games.get(0).gameID());
+        assertEquals("My First Game", games.get(0).gameName());
+        assertNull(games.get(0).whiteUsername());
+        assertNull(games.get(0).blackUsername());
+    }
+
+    @Test
+    public void createGameInvalidToken() {
+        assertThrows(
+                ServerException.class,
+                () -> facade.createGame("invalid-token", "My Game")
+        );
+    }
+
+    @Test
+    public void createGameBlankName() throws ServerException {
+        var auth = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.createGame(auth.authToken(), "   ")
+        );
+
+        assertTrue(facade.listGames(auth.authToken()).isEmpty());
+    }
+
+    @Test
+    public void listGamesEmpty() throws ServerException {
+        var auth = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        var games = facade.listGames(auth.authToken());
+
+        assertNotNull(games);
+        assertTrue(games.isEmpty());
+    }
+
+    @Test
+    public void listGamesSuccess() throws ServerException {
+        var auth = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        int firstID = facade.createGame(auth.authToken(), "First Game");
+        int secondID = facade.createGame(auth.authToken(), "Second Game");
+
+        var games = facade.listGames(auth.authToken());
+
+        assertEquals(2, games.size());
+        assertNotEquals(firstID, secondID);
+
+        assertTrue(games.stream().anyMatch(game ->
+                game.gameID() == firstID
+                        && "First Game".equals(game.gameName())
+        ));
+
+        assertTrue(games.stream().anyMatch(game ->
+                game.gameID() == secondID
+                        && "Second Game".equals(game.gameName())
+        ));
+    }
+
+    @Test
+    public void listGamesInvalidToken() {
+        assertThrows(
+                ServerException.class,
+                () -> facade.listGames("invalid-token")
+        );
+    }
+
+    @Test
+    public void listGamesAfterLogout() throws ServerException {
+        var auth = facade.register(
+                "player1",
+                "password",
+                "player1@email.com"
+        );
+
+        facade.logout(auth.authToken());
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.listGames(auth.authToken())
+        );
+    }
 }

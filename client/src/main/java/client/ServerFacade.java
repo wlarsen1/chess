@@ -12,6 +12,12 @@ import java.time.Duration;
 import model.AuthData;
 import model.UserData;
 import request.LoginRequest;
+import model.GameData;
+import request.CreateGameRequest;
+import response.CreateGameResponse;
+import response.ListGamesResponse;
+
+import java.util.List;
 
 public class ServerFacade {
 
@@ -78,6 +84,44 @@ public class ServerFacade {
                 authToken,
                 null
         );
+    }
+
+    public int createGame(
+            String authToken,
+            String gameName
+    ) throws ServerException {
+
+        CreateGameRequest request = new CreateGameRequest(gameName);
+
+        CreateGameResponse response = makeRequest(
+                "POST",
+                "/game",
+                request,
+                authToken,
+                CreateGameResponse.class
+        );
+
+        return response.gameID();
+    }
+
+    public List<GameData> listGames(String authToken)
+            throws ServerException {
+
+        ListGamesResponse response = makeRequest(
+                "GET",
+                "/game",
+                null,
+                authToken,
+                ListGamesResponse.class
+        );
+
+        if (response.games() == null) {
+            throw new ServerException(
+                    "The server returned an unexpected response."
+            );
+        }
+
+        return response.games();
     }
 
     private <T> T makeRequest(
