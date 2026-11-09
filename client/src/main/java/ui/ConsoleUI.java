@@ -56,6 +56,7 @@ public class ConsoleUI {
                     }
                     case "register" -> register(tokens);
                     case "login" -> login(tokens);
+                    case "logout" -> logout(tokens);
                     default -> System.out.println(
                             "Unknown command. Type help to see available commands."
                     );
@@ -94,12 +95,30 @@ public class ConsoleUI {
         System.out.println("Signed in as " + session.username() + ".");
     }
 
+    private void logout(String[] tokens) throws ServerException {
+        if (session == null) {
+            System.out.println("You are already signed out.");
+            return;
+        }
+
+        if (tokens.length != 1) {
+            System.out.println("Usage: logout");
+            return;
+        }
+
+        facade.logout(session.authToken());
+        session = null;
+        System.out.println("Signed out.");
+    }
+
     private void printHelp() {
         System.out.println("Available commands:");
 
         if (session == null) {
             System.out.println("  register <username> <password> <email> - create an account");
             System.out.println("  login <username> <password> - sign in");
+        } else {
+            System.out.println("  logout - sign out");
         }
 
         System.out.println("  help - show available commands");
