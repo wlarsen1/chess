@@ -16,6 +16,7 @@ import model.GameData;
 import request.CreateGameRequest;
 import response.CreateGameResponse;
 import response.ListGamesResponse;
+import request.JoinGameRequest;
 
 import java.util.List;
 
@@ -122,6 +123,26 @@ public class ServerFacade {
         }
 
         return response.games();
+    }
+
+    public void joinGame(
+            String authToken,
+            String playerColor,
+            int gameID
+    ) throws ServerException {
+
+        JoinGameRequest request = new JoinGameRequest(
+                playerColor,
+                gameID
+        );
+
+        makeRequest(
+                "PUT",
+                "/game",
+                request,
+                authToken,
+                null
+        );
     }
 
     private <T> T makeRequest(

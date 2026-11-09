@@ -294,4 +294,130 @@ public class ServerFacadeTests {
                 () -> facade.listGames(auth.authToken())
         );
     }
+
+    @Test
+    public void joinGameAsWhite() throws ServerException {
+        var auth = facade.register(
+                "player1", "password", "player1@email.com"
+        );
+        int gameID = facade.createGame(auth.authToken(), "My Game");
+
+        facade.joinGame(auth.authToken(), "WHITE", gameID);
+
+        var games = facade.listGames(auth.authToken());
+
+        assertEquals(1, games.size());
+        assertEquals(gameID, games.get(0).gameID());
+        assertEquals("player1", games.get(0).whiteUsername());
+        assertNull(games.get(0).blackUsername());
+    }
+
+    @Test
+    public void joinGameAsBlack() throws ServerException {
+        var auth = facade.register(
+                "player1", "password", "player1@email.com"
+        );
+        int gameID = facade.createGame(auth.authToken(), "My Game");
+
+        facade.joinGame(auth.authToken(), "BLACK", gameID);
+
+        var games = facade.listGames(auth.authToken());
+
+        assertEquals(1, games.size());
+        assertEquals("player1", games.get(0).blackUsername());
+        assertNull(games.get(0).whiteUsername());
+    }
+
+    @Test
+    public void joinGameWithTwoPlayers() throws ServerException {
+        var white = facade.register(
+                "whitePlayer", "password", "white@email.com"
+        );
+        var black = facade.register(
+                "blackPlayer", "password", "black@email.com"
+        );
+        int gameID = facade.createGame(white.authToken(), "My Game");
+
+        facade.joinGame(white.authToken(), "WHITE", gameID);
+        facade.joinGame(black.authToken(), "BLACK", gameID);
+
+        var games = facade.listGames(white.authToken());
+
+        assertEquals(1, games.size());
+        assertEquals("whitePlayer", games.get(0).whiteUsername());
+        assertEquals("blackPlayer", games.get(0).blackUsername());
+    }
+
+    @Test
+    public void joinGameOccupiedColor() throws ServerException {
+        var first = facade.register(
+                "player1", "password", "player1@email.com"
+        );
+        var second = facade.register(
+                "player2", "password", "player2@email.com"
+        );
+        int gameID = facade.createGame(first.authToken(), "My Game");
+
+        facade.joinGame(first.authToken(), "WHITE", gameID);
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.joinGame(
+                        second.authToken(), "WHITE", gameID
+                )
+        );
+
+        var games = facade.listGames(first.authToken());
+
+        assertEquals("player1", games.get(0).whiteUsername());
+        assertNull(games.get(0).blackUsername());
+    }
+
+    @Test
+    public void joinGameInvalidToken() throws ServerException {
+        var auth = facade.register(
+                "player1", "password", "player1@email.com"
+        );
+        int gameID = facade.createGame(auth.authToken(), "My Game");
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.joinGame("invalid-token", "WHITE", gameID)
+        );
+
+        var games = facade.listGames(auth.authToken());
+
+        assertNull(games.get(0).whiteUsername());
+        assertNull(games.get(0).blackUsername());
+    }
+
+    @Test
+    public void joinGameInvalidColor() throws ServerException {
+        var auth = facade.register(
+                "player1", "password", "player1@email.com"
+        );
+        int gameID = facade.createGame(auth.authToken(), "My Game");
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.joinGame(auth.authToken(), "BLUE", gameID)
+        );
+
+        var games = facade.listGames(auth.authToken());
+
+        assertNull(games.get(0).whiteUsername());
+        assertNull(games.get(0).blackUsername());
+    }
+
+    @Test
+    public void joinGameDoesNotExist() throws ServerException {
+        var auth = facade.register(
+                "player1", "password", "player1@email.com"
+        );
+
+        assertThrows(
+                ServerException.class,
+                () -> facade.joinGame(auth.authToken(), "WHITE", -1)
+        );
+    }
 }
