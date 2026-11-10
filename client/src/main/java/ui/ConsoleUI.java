@@ -57,6 +57,7 @@ public class ConsoleUI {
                     case "register" -> register(tokens);
                     case "login" -> login(tokens);
                     case "logout" -> logout(tokens);
+                    case "create" -> createGame(input.substring(tokens[0].length()).strip());
                     default -> System.out.println(
                             "Unknown command. Type help to see available commands."
                     );
@@ -111,6 +112,21 @@ public class ConsoleUI {
         System.out.println("Signed out.");
     }
 
+    private void createGame(String gameName) throws ServerException {
+        if (session == null) {
+            System.out.println("Sign in to create a game.");
+            return;
+        }
+
+        if (gameName.isBlank()) {
+            System.out.println("Usage: create <game name>");
+            return;
+        }
+
+        facade.createGame(session.authToken(), gameName);
+        System.out.println("Created game: " + gameName);
+    }
+
     private void printHelp() {
         System.out.println("Available commands:");
 
@@ -118,6 +134,7 @@ public class ConsoleUI {
             System.out.println("  register <username> <password> <email> - create an account");
             System.out.println("  login <username> <password> - sign in");
         } else {
+            System.out.println("  create <game name> - create a game");
             System.out.println("  logout - sign out");
         }
 
