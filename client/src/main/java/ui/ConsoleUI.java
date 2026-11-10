@@ -3,6 +3,8 @@ package ui;
 import client.ServerException;
 import client.ServerFacade;
 import model.AuthData;
+import model.GameData;
+import java.util.List;
 
 import java.util.Locale;
 import java.util.Scanner;
@@ -11,6 +13,7 @@ public class ConsoleUI {
 
     private final ServerFacade facade;
     private AuthData session;
+    private List<GameData> listedGames = List.of();
 
     public ConsoleUI(ServerFacade facade) {
         this.facade = facade;
@@ -58,6 +61,7 @@ public class ConsoleUI {
                     case "login" -> login(tokens);
                     case "logout" -> logout(tokens);
                     case "create" -> createGame(input.substring(tokens[0].length()).strip());
+                    case "list" -> listGames(tokens);
                     default -> System.out.println(
                             "Unknown command. Type help to see available commands."
                     );
@@ -98,6 +102,7 @@ public class ConsoleUI {
 
     private void logout(String[] tokens) throws ServerException {
         if (session == null) {
+            listedGames = List.of();
             System.out.println("You are already signed out.");
             return;
         }
@@ -127,6 +132,34 @@ public class ConsoleUI {
         System.out.println("Created game: " + gameName);
     }
 
+    private void listGames(String[] tokens) throws ServerException {
+        if (session == null) {
+            System.out.println("Sign in to list games.");
+            return;
+        }
+
+        if (tokens.length != 1) {
+            System.out.println("Usage: list");
+            return;
+        }
+
+        listedGames = facade.listGames(session.authToken());
+
+        if (listedGames.isEmpty()) {
+            System.out.println("No games yet. Use create <game name> to start one.");
+            return;
+        }
+
+        for (int index = 0; index < listedGames.size(); index++) {
+            GameData game = listedGames.get(index);
+            String white = game.whiteUsername() == null ? "Open" : game.whiteUsername();
+            String black = game.blackUsername() == null ? "Open" : game.blackUsername();
+
+            System.out.printf("%d. %s | White: %s | Black: %s%n",
+                    index + 1, game.gameName(), white, black);
+        }
+    }
+
     private void printHelp() {
         System.out.println("Available commands:");
 
@@ -135,6 +168,7 @@ public class ConsoleUI {
             System.out.println("  login <username> <password> - sign in");
         } else {
             System.out.println("  create <game name> - create a game");
+            System.out.println("  list - show available games");
             System.out.println("  logout - sign out");
         }
 
