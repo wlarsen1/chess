@@ -5,6 +5,8 @@ import client.ServerFacade;
 import model.AuthData;
 import model.GameData;
 import java.util.List;
+import chess.ChessBoard;
+import chess.ChessGame.TeamColor;
 
 import java.util.Locale;
 import java.util.Scanner;
@@ -62,6 +64,8 @@ public class ConsoleUI {
                     case "logout" -> logout(tokens);
                     case "create" -> createGame(input.substring(tokens[0].length()).strip());
                     case "list" -> listGames(tokens);
+                    case "join" -> joinGame(tokens);
+                    case "observe" -> observeGame(tokens);
                     default -> System.out.println(
                             "Unknown command. Type help to see available commands."
                     );
@@ -160,6 +164,73 @@ public class ConsoleUI {
         }
     }
 
+    private void joinGame(String[] tokens) throws ServerException {
+        if (session == null) {
+            System.out.println("Sign in to join a game.");
+            return;
+        }
+
+        if (tokens.length != 3) {
+            System.out.println("Usage: join <game number> <white|black>");
+            return;
+        }
+
+        TeamColor color = switch (tokens[2].toLowerCase(Locale.ROOT)) {
+            case "white" -> TeamColor.WHITE;
+            case "black" -> TeamColor.BLACK;
+            default -> throw new ServerException("Choose white or black.");
+        };
+
+        GameData game = selectListedGame(tokens[1]);
+        facade.joinGame(session.authToken(), color.name(), game.gameID());
+
+        System.out.println("Joined " + game.gameName() + " as "
+                + color.name().toLowerCase(Locale.ROOT) + ".");
+        printStartingBoard(color);
+    }
+
+    private void observeGame(String[] tokens) throws ServerException {
+        if (session == null) {
+            System.out.println("Sign in to observe a game.");
+            return;
+        }
+
+        if (tokens.length != 2) {
+            System.out.println("Usage: observe <game number>");
+            return;
+        }
+
+        GameData game = selectListedGame(tokens[1]);
+
+        System.out.println("Observing " + game.gameName() + ".");
+        printStartingBoard(TeamColor.WHITE);
+    }
+
+    private GameData selectListedGame(String input) throws ServerException {
+        if (listedGames.isEmpty()) {
+            throw new ServerException("Use list to see available game numbers.");
+        }
+
+        int gameNumber;
+        try {
+            gameNumber = Integer.parseInt(input);
+        } catch (NumberFormatException ex) {
+            throw new ServerException("Enter a game number from the list.");
+        }
+
+        if (gameNumber < 1 || gameNumber > listedGames.size()) {
+            throw new ServerException("Choose a game number from your last list.");
+        }
+
+        return listedGames.get(gameNumber - 1);
+    }
+
+    private void printStartingBoard(TeamColor perspective) {
+        ChessBoard board = new ChessBoard();
+        board.resetBoard();
+        System.out.print(BoardRenderer.render(board, perspective));
+    }
+
     private void printHelp() {
         System.out.println("Available commands:");
 
@@ -169,6 +240,8 @@ public class ConsoleUI {
         } else {
             System.out.println("  create <game name> - create a game");
             System.out.println("  list - show available games");
+            System.out.println("  join <game number> <white|black> - play a game");
+            System.out.println("  observe <game number> - view a game");
             System.out.println("  logout - sign out");
         }
 
