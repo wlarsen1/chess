@@ -8,4 +8,5 @@ public class ClientMain {
         ServerFacade facade = new ServerFacade(8080);
         new ConsoleUI(facade).run();
     }
+
 }
