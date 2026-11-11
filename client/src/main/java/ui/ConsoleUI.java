@@ -40,40 +40,48 @@ public class ConsoleUI {
                 continue;
             }
 
-            String[] tokens = input.split("\\s+");
-            String command = tokens[0].toLowerCase(Locale.ROOT);
-
             try {
-                switch (command) {
-                    case "help" -> {
-                        if (tokens.length == 1) {
-                            printHelp();
-                        } else {
-                            System.out.println("Usage: help");
-                        }
-                    }
-                    case "quit" -> {
-                        if (tokens.length == 1) {
-                            System.out.println("Goodbye!");
-                            return;
-                        }
-                        System.out.println("Usage: quit");
-                    }
-                    case "register" -> register(tokens);
-                    case "login" -> login(tokens);
-                    case "logout" -> logout(tokens);
-                    case "create" -> createGame(input.substring(tokens[0].length()).strip());
-                    case "list" -> listGames(tokens);
-                    case "join" -> joinGame(tokens);
-                    case "observe" -> observeGame(tokens);
-                    default -> System.out.println(
-                            "Unknown command. Type help to see available commands."
-                    );
+                if (handleCommand(input)) {
+                    return;
                 }
             } catch (ServerException ex) {
                 System.out.println(ex.getMessage());
             }
         }
+    }
+
+    private boolean handleCommand(String input) throws ServerException {
+        String[] tokens = input.split("\\s+");
+        String command = tokens[0].toLowerCase(Locale.ROOT);
+
+        switch (command) {
+            case "help" -> {
+                if (tokens.length == 1) {
+                    printHelp();
+                } else {
+                    System.out.println("Usage: help");
+                }
+            }
+            case "quit" -> {
+                if (tokens.length == 1) {
+                    System.out.println("Goodbye!");
+                    return true;
+                }
+                System.out.println("Usage: quit");
+            }
+            case "register" -> register(tokens);
+            case "login" -> login(tokens);
+            case "logout" -> logout(tokens);
+            case "create" -> createGame(input.substring(tokens[0].length()).strip());
+            case "list" -> listGames(tokens);
+            case "join" -> joinGame(tokens);
+            case "observe" -> observeGame(tokens);
+            default -> System.out.println(
+                    "Unknown command. Type help to see available commands."
+            );
+        }
+
+        return false;
     }
 
     private void register(String[] tokens) throws ServerException {
