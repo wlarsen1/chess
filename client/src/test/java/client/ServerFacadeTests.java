@@ -62,13 +62,9 @@ public class ServerFacadeTests {
 
     @Test
     public void registerDuplicateUsername() throws ServerException {
-        facade.register(
-                "player1",
-                "password",
-                "player1@email.com"
-        );
+        facade.register("player1", "password", "player1@email.com");
 
-        assertThrows(
+        var error = assertThrows(
                 ServerException.class,
                 () -> facade.register(
                         "player1",
@@ -76,6 +72,8 @@ public class ServerFacadeTests {
                         "different@email.com"
                 )
         );
+
+        assertEquals("That username is already taken.", error.getMessage());
     }
 
     @Test
@@ -360,15 +358,17 @@ public class ServerFacadeTests {
 
         facade.joinGame(first.authToken(), "WHITE", gameID);
 
-        assertThrows(
+        var error = assertThrows(
                 ServerException.class,
-                () -> facade.joinGame(
-                        second.authToken(), "WHITE", gameID
-                )
+                () -> facade.joinGame(second.authToken(), "WHITE", gameID)
+        );
+
+        assertEquals(
+                "That seat is already taken. Choose another color or game.",
+                error.getMessage()
         );
 
         var games = facade.listGames(first.authToken());
-
         assertEquals("player1", games.get(0).whiteUsername());
         assertNull(games.get(0).blackUsername());
     }

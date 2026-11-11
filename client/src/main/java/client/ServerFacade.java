@@ -179,11 +179,8 @@ public class ServerFacade {
                     HttpResponse.BodyHandlers.ofString()
             );
 
-            if (response.statusCode() < 200
-                    || response.statusCode() >= 300) {
-                throw new ServerException(
-                        errorMessage(response.statusCode())
-                );
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new ServerException(errorMessage(response.statusCode(), path));
             }
 
             if (responseType == null) {
@@ -216,11 +213,15 @@ public class ServerFacade {
         }
     }
 
-    private String errorMessage(int statusCode) {
+    private String errorMessage(int statusCode, String path) {
         return switch (statusCode) {
             case 400 -> "Please check the information you entered.";
             case 401 -> "Please check your credentials or log in again.";
-            case 403 -> "That action is not allowed.";
+            case 403 -> switch (path) {
+                case "/user" -> "That username is already taken.";
+                case "/game" -> "That seat is already taken. Choose another color or game.";
+                default -> "That action is not allowed.";
+            };
             case 404 -> "The requested item could not be found.";
             case 409 -> "That username is already taken.";
             default -> "The server could not complete your request.";
